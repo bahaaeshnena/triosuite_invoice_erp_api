@@ -130,6 +130,8 @@ $env:Jwt__Key = "replace-with-a-long-random-secret-at-least-32-characters"
 
 ### 4. Restore, build, and run
 
+For API testing on the same computer only:
+
 ```powershell
 dotnet restore
 dotnet build
@@ -142,6 +144,119 @@ The development profile starts the API at:
 - Swagger UI: `http://localhost:5112/swagger`
 
 If the terminal displays another URL, use the URL shown by `dotnet run`.
+
+## Connect a physical Android device over the local network
+
+`localhost` always means the device on which the URL is opened. Therefore, `http://localhost:5112` works from the API computer, but it does not work from a physical Android phone. The phone must use the API computer's LAN IPv4 address.
+
+### 1. Connect both devices to the same network
+
+Connect the Windows computer that runs SQL Server and the API, and the Android phone that runs Flutter, to the same Wi-Fi/router. Guest Wi-Fi networks may block communication between connected devices and should be avoided.
+
+### 2. Find the API computer's IPv4 address
+
+Run this on the API computer:
+
+```powershell
+ipconfig
+```
+
+Find **IPv4 Address** under the active Wi-Fi or Ethernet adapter. It will normally look similar to:
+
+```text
+192.168.1.17
+```
+
+`192.168.1.100` and `192.168.1.17` are examples only. Always use the address reported on the computer that will run the API.
+
+### 3. Start the API on all network interfaces
+
+From the API project directory, run:
+
+```powershell
+dotnet restore
+dotnet run --urls "http://0.0.0.0:5112"
+```
+
+When running from the parent directory, use:
+
+```powershell
+dotnet run --project .\triosuite_invoice_erp_api\triosuite_invoice_erp_api.csproj --urls "http://0.0.0.0:5112"
+```
+
+`0.0.0.0` is a server listening address. Do not put `0.0.0.0` in Flutter. Flutter must use the computer's actual IPv4 address.
+
+The API route prefix `/api/` is also not part of the Kestrel listening address. The server listens on port `5112`, while controllers expose routes such as `/api/auth/login`.
+
+### 4. Allow TCP port 5112 through Windows Firewall
+
+When Windows displays a firewall prompt, allow access on **Private networks**. If no prompt appears, open PowerShell as Administrator and run:
+
+```powershell
+New-NetFirewallRule -DisplayName "Triosuite Invoice API 5112" -Direction Inbound -Action Allow -Protocol TCP -LocalPort 5112 -Profile Private
+```
+
+Only create this rule on the computer that runs the API. Keep the network profile set to **Private**, not Public.
+
+### 5. Test the API before building Flutter
+
+First test Swagger on the API computer:
+
+```text
+http://localhost:5112/swagger/index.html
+```
+
+Then open the following URL in the Android phone's browser, replacing the example IP:
+
+```text
+http://192.168.1.17:5112/swagger/index.html
+```
+
+Do not continue to the Flutter build until the Swagger page opens from the phone. If it does not open, the issue is the IP address, API listener, firewall, or Wi-Fi network—not Flutter.
+
+### 6. Use the same address in Flutter
+
+If the computer IP is `192.168.1.17`, the Flutter base URL is:
+
+```text
+http://192.168.1.17:5112/api/
+```
+
+Build the Android release from the Flutter project:
+
+```powershell
+flutter build apk --release --dart-define=API_BASE_URL=http://192.168.1.17:5112/api/
+```
+
+The `API_BASE_URL` value is compiled into the APK. If the computer's IP address changes, the existing APK will still call the old address. Either reserve that IPv4 address in the router/DHCP settings, assign a suitable static address to the computer, or rebuild the APK with the new address.
+
+For an APK sent to another person, that person's API computer must use the exact IP address embedded in the APK. Otherwise, the recipient must build a new APK using their own computer's IPv4 address.
+
+### URL reference
+
+| Flutter target | API address used by Flutter | API command |
+|---|---|---|
+| Windows/Web on API computer | `http://localhost:5112/api/` | `dotnet run` |
+| Android Emulator on API computer | `http://10.0.2.2:5112/api/` | `dotnet run --urls "http://0.0.0.0:5112"` |
+| Physical Android phone | `http://<API-PC-IP>:5112/api/` | `dotnet run --urls "http://0.0.0.0:5112"` |
+
+Example: if `<API-PC-IP>` is `192.168.1.17`, use `http://192.168.1.17:5112/api/`.
+
+## Run a published API package
+
+To prepare a Release package:
+
+```powershell
+dotnet publish -c Release -o .\publish
+```
+
+Copy the `publish` directory to the target computer. After installing the .NET 8 ASP.NET Core Runtime and configuring `appsettings.json`, start it from that directory:
+
+```powershell
+dotnet .\triosuite_invoice_erp_api.dll --urls "http://0.0.0.0:5112"
+```
+
+Keep this terminal/process running while the Android application is in use. SQL Server must also be running on the same computer, unless the connection string points to another reachable SQL Server.
 
 ## Demo data
 
@@ -292,6 +407,25 @@ dotnet run --urls http://localhost:5200
 ```
 
 Then open `http://localhost:5200/swagger`.
+
+### The API works on the computer but not on the Android phone
+
+Check the following in order:
+
+1. Confirm that the phone and computer are connected to the same non-guest network.
+2. Run `ipconfig` again and confirm that Flutter uses the current IPv4 address.
+3. Start the API with `--urls "http://0.0.0.0:5112"`; `dotnet run` using only `localhost` is not sufficient for a physical phone.
+4. Confirm that the console says the API is listening on port `5112`.
+5. Open `http://<API-PC-IP>:5112/swagger/index.html` from the phone's browser.
+6. Check the Windows Firewall inbound rule for TCP port `5112` on Private networks.
+7. Temporarily disconnect VPN software that may block local-network traffic.
+8. Check whether the router has AP/client isolation enabled.
+
+If Swagger opens on the phone but Flutter still fails, rebuild or reinstall the APK with exactly the same reachable address, including `/api/`:
+
+```powershell
+flutter build apk --release --dart-define=API_BASE_URL=http://<API-PC-IP>:5112/api/
+```
 
 ## Production checklist
 
