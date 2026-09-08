@@ -1,3 +1,10 @@
+/*
+    Triosuite Invoice ERP API
+    Script 2 of 3: Create or update all stored procedures used by the API.
+
+    Run 01_CreateDatabaseAndTables.sql before this script.
+*/
+
 USE SalesInvoiceDB;
 GO
 
@@ -402,4 +409,7 @@ BEGIN
         CancellationReasonAr = @ReasonAr, CancellationReasonEn = @ReasonEn
     WHERE Id = @Id;
 END;
+GO
+
+PRINT N'Stored procedures are ready.';
 GO

@@ -1,3 +1,11 @@
+/*
+    Triosuite Invoice ERP API
+    Script 1 of 3: Create the database, tables, constraints, and indexes.
+
+    This script is idempotent. It can be executed again without deleting
+    existing business data.
+*/
+
 USE master;
 GO
 
@@ -155,6 +163,10 @@ IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE object_id = OBJECT_ID(N'dbo.Items
     CREATE UNIQUE INDEX UX_Items_Barcode ON dbo.Items(Barcode) WHERE Barcode IS NOT NULL;
 GO
 
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE object_id = OBJECT_ID(N'dbo.Currencies') AND name = N'UX_Currencies_BaseCurrency')
+    CREATE UNIQUE INDEX UX_Currencies_BaseCurrency ON dbo.Currencies(IsBaseCurrency) WHERE IsBaseCurrency = 1;
+GO
+
 IF OBJECT_ID(N'dbo.Settings', N'U') IS NULL
 BEGIN
     CREATE TABLE dbo.Settings
@@ -228,70 +240,5 @@ BEGIN
 END;
 GO
 
-IF NOT EXISTS (SELECT 1 FROM dbo.SystemCodes WHERE Code = N'INVOICE_STATUS')
-    INSERT dbo.SystemCodes (Code, NameAr, NameEn) VALUES (N'INVOICE_STATUS', N'حالة الفاتورة', N'Invoice Status');
-IF NOT EXISTS (SELECT 1 FROM dbo.SystemCodes WHERE Code = N'TAX_MODE')
-    INSERT dbo.SystemCodes (Code, NameAr, NameEn) VALUES (N'TAX_MODE', N'طريقة الضريبة', N'Tax Mode');
-
-DECLARE @InvoiceStatusId INT = (SELECT Id FROM dbo.SystemCodes WHERE Code = N'INVOICE_STATUS');
-DECLARE @TaxModeId INT = (SELECT Id FROM dbo.SystemCodes WHERE Code = N'TAX_MODE');
-IF NOT EXISTS (SELECT 1 FROM dbo.SystemCodeValues WHERE SystemCodeId = @InvoiceStatusId AND Code = N'DRAFT')
-    INSERT dbo.SystemCodeValues (SystemCodeId, Code, NameAr, NameEn, SortOrder) VALUES (@InvoiceStatusId, N'DRAFT', N'مسودة', N'Draft', 1);
-IF NOT EXISTS (SELECT 1 FROM dbo.SystemCodeValues WHERE SystemCodeId = @InvoiceStatusId AND Code = N'APPROVED')
-    INSERT dbo.SystemCodeValues (SystemCodeId, Code, NameAr, NameEn, SortOrder) VALUES (@InvoiceStatusId, N'APPROVED', N'معتمدة', N'Approved', 2);
-IF NOT EXISTS (SELECT 1 FROM dbo.SystemCodeValues WHERE SystemCodeId = @InvoiceStatusId AND Code = N'CANCELLED')
-    INSERT dbo.SystemCodeValues (SystemCodeId, Code, NameAr, NameEn, SortOrder) VALUES (@InvoiceStatusId, N'CANCELLED', N'ملغاة', N'Cancelled', 3);
-IF NOT EXISTS (SELECT 1 FROM dbo.SystemCodeValues WHERE SystemCodeId = @TaxModeId AND Code = N'INCLUSIVE')
-    INSERT dbo.SystemCodeValues (SystemCodeId, Code, NameAr, NameEn, SortOrder) VALUES (@TaxModeId, N'INCLUSIVE', N'شاملة الضريبة', N'Tax Inclusive', 1);
-IF NOT EXISTS (SELECT 1 FROM dbo.SystemCodeValues WHERE SystemCodeId = @TaxModeId AND Code = N'EXCLUSIVE')
-    INSERT dbo.SystemCodeValues (SystemCodeId, Code, NameAr, NameEn, SortOrder) VALUES (@TaxModeId, N'EXCLUSIVE', N'غير شاملة الضريبة', N'Tax Exclusive', 2);
-GO
-
-IF NOT EXISTS (SELECT 1 FROM dbo.Currencies WHERE Code = N'JOD')
-    INSERT dbo.Currencies (Code, NameAr, NameEn, Symbol, IsBaseCurrency) VALUES (N'JOD', N'دينار أردني', N'Jordanian Dinar', N'JD', 1);
-IF NOT EXISTS (SELECT 1 FROM dbo.Currencies WHERE Code = N'USD')
-    INSERT dbo.Currencies (Code, NameAr, NameEn, Symbol) VALUES (N'USD', N'دولار أمريكي', N'US Dollar', N'$');
-IF NOT EXISTS (SELECT 1 FROM dbo.Currencies WHERE Code = N'EUR')
-    INSERT dbo.Currencies (Code, NameAr, NameEn, Symbol) VALUES (N'EUR', N'يورو', N'Euro', N'€');
-IF NOT EXISTS (SELECT 1 FROM dbo.Units WHERE Code = N'PCS')
-    INSERT dbo.Units (Code, NameAr, NameEn) VALUES (N'PCS', N'قطعة', N'Piece');
-IF NOT EXISTS (SELECT 1 FROM dbo.Units WHERE Code = N'BOX')
-    INSERT dbo.Units (Code, NameAr, NameEn) VALUES (N'BOX', N'صندوق', N'Box');
-IF NOT EXISTS (SELECT 1 FROM dbo.Units WHERE Code = N'KG')
-    INSERT dbo.Units (Code, NameAr, NameEn) VALUES (N'KG', N'كيلوغرام', N'Kilogram');
-IF NOT EXISTS (SELECT 1 FROM dbo.Units WHERE Code = N'LTR')
-    INSERT dbo.Units (Code, NameAr, NameEn) VALUES (N'LTR', N'لتر', N'Liter');
-GO
-
--- Demo login: admin / Admin@123
-IF NOT EXISTS (SELECT 1 FROM dbo.Users WHERE Username = N'admin')
-    INSERT dbo.Users (Username, PasswordHash, FullNameAr, FullNameEn)
-    VALUES (N'admin', N'PBKDF2$100000$j8taFikDRauGQ7QSH2EnvA==$/JWFXidhlNUmrOLHdYEiuYKTWkWU/fMT2EW+MSOwEZg=', N'مدير النظام', N'System Administrator');
-
-IF NOT EXISTS (SELECT 1 FROM dbo.Customers WHERE Code = N'CUST-001')
-    INSERT dbo.Customers (Code, NameAr, NameEn, Phone) VALUES (N'CUST-001', N'شركة النور', N'Al Noor Company', N'0790000001');
-IF NOT EXISTS (SELECT 1 FROM dbo.Customers WHERE Code = N'CUST-002')
-    INSERT dbo.Customers (Code, NameAr, NameEn, Phone) VALUES (N'CUST-002', N'مؤسسة الأمل', N'Al Amal Establishment', N'0790000002');
-
-DECLARE @PieceUnitId INT = (SELECT Id FROM dbo.Units WHERE Code = N'PCS');
-IF NOT EXISTS (SELECT 1 FROM dbo.Items WHERE Code = N'ITEM-001')
-    INSERT dbo.Items (Code, NameAr, NameEn, Barcode, UnitId, UnitPrice, TaxRate) VALUES (N'ITEM-001', N'لوحة مفاتيح', N'Keyboard', N'625100000001', @PieceUnitId, 18.000, 16.00);
-IF NOT EXISTS (SELECT 1 FROM dbo.Items WHERE Code = N'ITEM-002')
-    INSERT dbo.Items (Code, NameAr, NameEn, Barcode, UnitId, UnitPrice, TaxRate) VALUES (N'ITEM-002', N'فأرة لاسلكية', N'Wireless Mouse', N'625100000002', @PieceUnitId, 12.500, 16.00);
-IF NOT EXISTS (SELECT 1 FROM dbo.Items WHERE Code = N'ITEM-003')
-    INSERT dbo.Items (Code, NameAr, NameEn, Barcode, UnitId, UnitPrice, TaxRate) VALUES (N'ITEM-003', N'شاشة', N'Monitor', N'625100000003', @PieceUnitId, 125.000, 16.00);
-
-IF NOT EXISTS (SELECT 1 FROM dbo.Settings)
-    INSERT dbo.Settings (CompanyNameAr, CompanyNameEn, DefaultCurrencyId, InvoicePrefix)
-    SELECT N'شركة ترايوسويت التجريبية', N'Triosuite Demo Company', Id, N'INV'
-    FROM dbo.Currencies WHERE Code = N'JOD';
-
--- Keep the demo Arabic text correct when this seed script is re-run.
-UPDATE dbo.Users SET FullNameAr = N'مدير النظام' WHERE Username = N'admin';
-UPDATE dbo.Customers SET NameAr = N'شركة النور' WHERE Code = N'CUST-001';
-UPDATE dbo.Customers SET NameAr = N'مؤسسة الأمل' WHERE Code = N'CUST-002';
-UPDATE dbo.Items SET NameAr = N'لوحة مفاتيح' WHERE Code = N'ITEM-001';
-UPDATE dbo.Items SET NameAr = N'فأرة لاسلكية' WHERE Code = N'ITEM-002';
-UPDATE dbo.Items SET NameAr = N'شاشة' WHERE Code = N'ITEM-003';
-UPDATE dbo.Settings SET CompanyNameAr = N'شركة ترايوسويت التجريبية' WHERE CompanyNameEn = N'Triosuite Demo Company';
+PRINT N'Database tables and indexes are ready.';
 GO
