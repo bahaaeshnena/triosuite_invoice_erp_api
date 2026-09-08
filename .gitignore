@@ -1,0 +1,21 @@
+# Build output
+bin/
+obj/
+
+# Visual Studio
+.vs/
+*.user
+*.suo
+
+# Rider / JetBrains
+.idea/
+*.sln.iml
+
+# Local environment and secrets
+.env
+.env.*
+appsettings.Local.json
+
+# OS files
+.DS_Store
+Thumbs.db

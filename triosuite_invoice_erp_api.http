@@ -1,0 +1,70 @@
+@baseUrl = http://localhost:5112
+@token = paste-login-token-here
+@invoiceId = 1
+
+### Login
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "username": "admin",
+  "password": "Admin@123"
+}
+
+### Load create-invoice lookups
+GET {{baseUrl}}/api/lookups
+Authorization: Bearer {{token}}
+
+### Find item by barcode
+GET {{baseUrl}}/api/lookups/items/barcode/625100000001
+Authorization: Bearer {{token}}
+
+### List invoices
+GET {{baseUrl}}/api/invoices?status=DRAFT&search=
+Authorization: Bearer {{token}}
+
+### Create invoice
+POST {{baseUrl}}/api/invoices
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "invoiceDate": "2026-09-07T10:00:00",
+  "customerId": 1,
+  "currencyId": 1,
+  "exchangeRate": 1,
+  "taxMode": "EXCLUSIVE",
+  "notesAr": "فاتورة تجريبية",
+  "notesEn": "Demo invoice",
+  "items": [
+    {
+      "itemId": 1,
+      "unitId": 1,
+      "quantity": 2,
+      "unitPrice": 18,
+      "taxRate": 16
+    }
+  ]
+}
+
+### Invoice details
+GET {{baseUrl}}/api/invoices/{{invoiceId}}
+Authorization: Bearer {{token}}
+
+### Approve invoice
+POST {{baseUrl}}/api/invoices/{{invoiceId}}/approve
+Authorization: Bearer {{token}}
+
+### Cancel invoice
+POST {{baseUrl}}/api/invoices/{{invoiceId}}/cancel
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "reasonAr": "طلب العميل",
+  "reasonEn": "Customer request"
+}
+
+### Read settings
+GET {{baseUrl}}/api/settings
+Authorization: Bearer {{token}}

@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.13.35913.81 d17.13
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "triosuite_invoice_erp_api", "triosuite_invoice_erp_api.csproj", "{762EB05F-B8C4-4243-8143-3DD2D031DE2F}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{762EB05F-B8C4-4243-8143-3DD2D031DE2F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{762EB05F-B8C4-4243-8143-3DD2D031DE2F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{762EB05F-B8C4-4243-8143-3DD2D031DE2F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{762EB05F-B8C4-4243-8143-3DD2D031DE2F}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {D375AF50-ACB5-4571-9506-450C1DBC49A7}
+	EndGlobalSection
+EndGlobal
